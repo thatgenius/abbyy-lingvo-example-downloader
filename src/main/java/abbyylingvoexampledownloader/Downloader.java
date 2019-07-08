@@ -32,6 +32,11 @@ public class Downloader {
     private static int examplesPerThread = 200;
     private static int threadNumber = 4;
 
+    /*
+     * First argument is a word or phrase to look for in contexts.
+     * Second argument is a number of examples per thread.
+     * Third argument is a number of threads.
+     * */
     public static void main(String[] args) {
         noteStartTime();
         processParams(args);
