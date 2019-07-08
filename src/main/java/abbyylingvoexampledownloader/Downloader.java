@@ -36,24 +36,28 @@ public class Downloader {
         noteStartTime();
         processParams(args);
         ExecutorService executorService = Executors.newCachedThreadPool();
+        StringBuffer examplesBuffer = new StringBuffer();
+        startAllDownloadTasks(executorService, examplesBuffer);
+        waitUntilAllTasksFinish(executorService);
+        writeStringToFile(examplesBuffer.toString(), true);
+        printFinalStatistics();
+    }
+
+    private static void startAllDownloadTasks(ExecutorService executorService, StringBuffer examplesBuffer) {
         int offset = 0;
         int threadCounter = 1;
         List<Runnable> tasks = new ArrayList<>();
         Task task;
         writeStringToFile(String.format(TITLE_MESSAGE, inputString), false);
         System.out.println(String.format(START_DOWNLOADING_MESSAGE, inputString));
-        StringBuffer stringBuffer = new StringBuffer();
         while (threadCounter <= threadNumber) {
-            task = new Task(buildUrl(offset), stringBuffer, threadCounter);
+            task = new Task(buildUrl(offset), examplesBuffer, threadCounter);
             threadCounter++;
             tasks.add(task);
             executorService.execute(task);
             offset += examplesPerThread;
         }
         executorService.shutdown();
-        waitUntilAllTasksFinish(executorService);
-        writeStringToFile(stringBuffer.toString(), true);
-        printFinalStatistics();
     }
 
     private static void noteStartTime() {
