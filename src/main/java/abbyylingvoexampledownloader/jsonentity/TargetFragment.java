@@ -1,4 +1,4 @@
-package abbyylingvoexampleloader.jsonentity;
+package abbyylingvoexampledownloader.jsonentity;
 
 public class TargetFragment {
     private String text;

@@ -1,4 +1,4 @@
-package abbyylingvoexampleloader.jsonentity;
+package abbyylingvoexampledownloader.jsonentity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

@@ -1,4 +1,4 @@
-package abbyylingvoexampleloader;
+package abbyylingvoexampledownloader;
 
 import org.apache.commons.io.FileUtils;
 
@@ -7,65 +7,86 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Loader {
+/*
+ * Concurrent downloader of examples from lingvolive.com
+ * */
+public class Downloader {
     public static final File FILE_TO_WRITE = new File("output.txt");
     private static final String URL = "https://api.lingvolive.com/Translation/Examples?text=%s&dstLang=1049&srcLang=1033&pageSize=%s&startIndex=%s";
-    private static final String CAN_NOT_WRITE_TO_FILE_MESSAGE = "Can't write to file \"%s\"";
-    private static final String START_DOWNLOADING_MESSAGE = "Start downloading examples for the word \"%s\" from lingvolive.com ...";
-    private static final String TITLE_MESSAGE = "These are examples for the word: \"%s\" downloaded from lingvolive.com. \n\n";
     /* params related messages */
     private static final String NO_USER_CONF_PARAMS_SUPPLIED_MESSAGE = "No user configuration parameters supplied! Using default ones.";
     private static final String NO_PARAMS_MESSAGE = "No input string supplied to look for examples! Exiting ...";
     private static final String ONLY_ONE_PARAM_SUPPLIED_MESSAGE = "Only one configuration parameter is supplied. Second one is set to default.";
     private static final String USED_PARAMS_MESSAGE = "Used parameters are: \"examplesPerThread\" = %s, \"threadNumber\" = %s";
+    /* other messages */
+    private static final String CAN_NOT_WRITE_TO_FILE_MESSAGE = "Can't write to file \"%s\"";
+    private static final String START_DOWNLOADING_MESSAGE = "Start downloading examples for the word \"%s\" from lingvolive.com ...";
+    private static final String TITLE_MESSAGE = "These are examples for the word: \"%s\" downloaded from lingvolive.com. \n\n";
+    private static final String FINAL_STATISTICS_MESSAGE = "Acquiring examples took: %s seconds";
     public static String inputString;
+    private static Date startAtDate;
     private static int examplesPerThread = 200;
     private static int threadNumber = 4;
 
     public static void main(String[] args) {
-        Date date = new Date();
+        noteStartTime();
         processParams(args);
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        ExecutorService executorService = Executors.newCachedThreadPool();
         int offset = 0;
         int threadCounter = 1;
         List<Runnable> tasks = new ArrayList<>();
         Task task;
+        writeStringToFile(String.format(TITLE_MESSAGE, inputString), false);
+        System.out.println(String.format(START_DOWNLOADING_MESSAGE, inputString));
+        StringBuffer stringBuffer = new StringBuffer();
+        while (threadCounter <= threadNumber) {
+            task = new Task(buildUrl(offset), stringBuffer, threadCounter);
+            threadCounter++;
+            tasks.add(task);
+            executorService.execute(task);
+            offset += examplesPerThread;
+        }
+        executorService.shutdown();
+        waitUntilAllTasksFinish(executorService);
+        writeStringToFile(stringBuffer.toString(), true);
+        printFinalStatistics();
+    }
+
+    private static void noteStartTime() {
+        startAtDate = new Date();
+    }
+
+    private static void writeStringToFile(String string, boolean append) {
         try {
-            FileUtils.writeStringToFile(FILE_TO_WRITE, String.format(TITLE_MESSAGE, inputString), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(FILE_TO_WRITE, string, StandardCharsets.UTF_8, append);
         } catch (IOException e) {
             canNotWriteToFile(e);
         }
-        System.out.println(String.format(START_DOWNLOADING_MESSAGE, inputString));
-        while (threadCounter <= threadNumber) {
-            task = new Task(buildUrl(offset), threadCounter);
-            threadCounter++;
-            tasks.add(task);
-            threadPoolExecutor.execute(task);
-            offset += examplesPerThread;
+    }
+
+    private static void waitUntilAllTasksFinish(ExecutorService executorService) {
+        boolean isFinished = false;
+        while (!isFinished) {
+            try {
+                isFinished = executorService.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException ignore) {
+            }
         }
-        threadPoolExecutor.shutdown();
-        printFinalStatistics(threadPoolExecutor, date);
     }
 
     /*
      * Print time it took to finish the global task to stdout.
      * */
-    private static void printFinalStatistics(ThreadPoolExecutor threadPoolExecutor, Date date) {
-        boolean isFinished = false;
-        while (!isFinished) {
-            try {
-                isFinished = threadPoolExecutor.awaitTermination(60, TimeUnit.SECONDS);
-            } catch (InterruptedException ignore) {
-            }
-        }
-        System.out.println("Retrieving examples took: " + (new Date().getTime() - date.getTime()) / 1000 + " seconds");
+    private static void printFinalStatistics() {
+        long totalTimeInSec = (new Date().getTime() - startAtDate.getTime()) / 1000;
+        System.out.println(String.format(FINAL_STATISTICS_MESSAGE, totalTimeInSec));
     }
 
-    public static void canNotWriteToFile(IOException e) {
+    private static void canNotWriteToFile(IOException e) {
         System.out.println(String.format(CAN_NOT_WRITE_TO_FILE_MESSAGE, FILE_TO_WRITE.getAbsolutePath()));
         e.printStackTrace();
         System.exit(0);
@@ -96,4 +117,3 @@ public class Loader {
         }
     }
 }
-

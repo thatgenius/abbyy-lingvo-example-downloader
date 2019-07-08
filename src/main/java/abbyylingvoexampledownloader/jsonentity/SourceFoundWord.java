@@ -1,4 +1,4 @@
-package abbyylingvoexampleloader.jsonentity;
+package abbyylingvoexampledownloader.jsonentity;
 
 public class SourceFoundWord {
     private int begin;

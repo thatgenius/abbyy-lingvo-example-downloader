@@ -6,7 +6,7 @@
     <groupId>my.app</groupId>
     <version>1</version>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>AbbyyLingvoExampleLoader</artifactId>
+    <artifactId>AbbyyLingvoExampleDownloader</artifactId>
 
     <build>
         <plugins>
@@ -23,7 +23,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <configuration>
-                    <mainClass>abbyylingvoexampleloader.Loader</mainClass>
+                    <mainClass>abbyylingvoexampledownloader.Downloader</mainClass>
                 </configuration>
             </plugin>
         </plugins>
