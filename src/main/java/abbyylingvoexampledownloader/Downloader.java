@@ -33,9 +33,9 @@ public class Downloader {
     private static int threadNumber = 4;
 
     /*
-     * First argument is a word or phrase to look for in contexts.
-     * Second argument is a number of examples per thread.
-     * Third argument is a number of threads.
+     * The first argument is a word or phrase to look for in contexts.
+     * The second argument is a number of examples per thread.
+     * The third argument is a number of threads.
      * */
     public static void main(String[] args) {
         noteStartTime();
